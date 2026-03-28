@@ -96,5 +96,50 @@ namespace MediaTekDocuments.controller
         {
             return access.CreerExemplaire(exemplaire);
         }
+
+        public List<CommandeDocument> GetCommandesDocument(string idLivreDvd)
+        {
+            return access.GetCommandesDocument(idLivreDvd);
+        }
+
+        public List<Suivi> GetAllSuivi()
+        {
+            return access.GetAllSuivi();
+        }
+
+        public bool CreerCommandeDocument(CommandeDocument commande)
+        {
+            return access.CreerCommandeDocument(commande);
+        }
+
+        public bool UpdateSuiviCommande(string idCommande, int idSuivi)
+        {
+            return access.UpdateSuiviCommande(idCommande, idSuivi);
+        }
+
+        public bool SupprimerCommandeDocument(string idCommande)
+        {
+            return access.SupprimerCommandeDocument(idCommande);
+        }
+
+        public List<Abonnement> GetAbonnementsRevue(string idRevue)
+        {
+            return access.GetAbonnementsRevue(idRevue);
+        }
+
+        public bool CreerAbonnement(Abonnement abonnement)
+        {
+            return access.CreerAbonnement(abonnement);
+        }
+
+        public bool SupprimerAbonnement(string idAbonnement)
+        {
+            return access.SupprimerAbonnement(idAbonnement);
+        }
+
+        public List<Abonnement> GetAbonnementsExpiration()
+        {
+            return access.GetAbonnementsExpiration();
+        }
     }
 }

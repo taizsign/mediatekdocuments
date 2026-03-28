@@ -1239,5 +1239,312 @@ namespace MediaTekDocuments.view
             }
         }
         #endregion
+
+        private void FrmMediatek_Load(object sender, EventArgs e)
+        {
+            List<Abonnement> expirations = controller.GetAbonnementsExpiration();
+            if (expirations.Count > 0)
+            {
+                string message = "Abonnements expirant dans moins de 30 jours :\n\n";
+                foreach (Abonnement a in expirations)
+                {
+                    message += a.Titre + " - " + a.DateFinAbonnement.ToString("dd/MM/yyyy") + "\n";
+                }
+                MessageBox.Show(message, "Alerte abonnements");
+            }
+        }
+
+        #region Onglet Commandes Livres
+        private readonly BindingSource bdgCommLivreListe = new BindingSource();
+        private readonly BindingSource bdgCommLivreSuivi = new BindingSource();
+        private List<CommandeDocument> lesCommandesLivre = new List<CommandeDocument>();
+        private Livre leLivreCommande = null;
+
+        private void tabCommandesLivres_Enter(object sender, EventArgs e)
+        {
+            bdgCommLivreSuivi.DataSource = controller.GetAllSuivi();
+            cbxCommLivreSuivi.DataSource = bdgCommLivreSuivi;
+        }
+
+        private void btnCommLivreRecherche_Click(object sender, EventArgs e)
+        {
+            if (txbCommLivreNumRecherche.Text.Equals(""))
+            {
+                MessageBox.Show("Veuillez saisir un numéro de livre.");
+                return;
+            }
+            if (lesLivres.Count == 0)
+            {
+                lesLivres = controller.GetAllLivres();
+            }
+            leLivreCommande = lesLivres.Find(x => x.Id.Equals(txbCommLivreNumRecherche.Text));
+            if (leLivreCommande == null)
+            {
+                MessageBox.Show("Numéro introuvable.");
+                return;
+            }
+            txbCommLivreNumero.Text = leLivreCommande.Id;
+            txbCommLivreTitre.Text = leLivreCommande.Titre;
+            txbCommLivreAuteur.Text = leLivreCommande.Auteur;
+            lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
+            RemplirCommLivreListe(lesCommandesLivre);
+        }
+
+        private void RemplirCommLivreListe(List<CommandeDocument> commandes)
+        {
+            bdgCommLivreListe.DataSource = commandes;
+            dgvCommLivreListe.DataSource = bdgCommLivreListe;
+            dgvCommLivreListe.Columns["IdLivreDvd"].Visible = false;
+            dgvCommLivreListe.Columns["IdSuivi"].Visible = false;
+            dgvCommLivreListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        }
+
+        private void dgvCommLivreListe_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            string col = dgvCommLivreListe.Columns[e.ColumnIndex].HeaderText;
+            List<CommandeDocument> sortedList = new List<CommandeDocument>();
+            switch (col)
+            {
+                case "Id":
+                    sortedList = lesCommandesLivre.OrderBy(o => o.Id).ToList();
+                    break;
+                case "DateCommande":
+                    sortedList = lesCommandesLivre.OrderBy(o => o.DateCommande).ToList();
+                    break;
+                case "Montant":
+                    sortedList = lesCommandesLivre.OrderBy(o => o.Montant).ToList();
+                    break;
+                case "NbExemplaire":
+                    sortedList = lesCommandesLivre.OrderBy(o => o.NbExemplaire).ToList();
+                    break;
+                case "LibelleSuivi":
+                    sortedList = lesCommandesLivre.OrderBy(o => o.LibelleSuivi).ToList();
+                    break;
+                default:
+                    sortedList = lesCommandesLivre;
+                    break;
+            }
+            RemplirCommLivreListe(sortedList);
+        }
+
+        private void btnCommLivreAjouter_Click(object sender, EventArgs e)
+        {
+            if (leLivreCommande == null)
+            {
+                MessageBox.Show("Rechercher un livre avant d'ajouter une commande.");
+                return;
+            }
+            if (txbCommLivreMontant.Text.Equals("") || txbCommLivreNbExemplaires.Text.Equals(""))
+            {
+                MessageBox.Show("Tous les champs sont obligatoires.");
+                return;
+            }
+            try
+            {
+                double montant = double.Parse(txbCommLivreMontant.Text);
+                int nbEx = int.Parse(txbCommLivreNbExemplaires.Text);
+                CommandeDocument commande = new CommandeDocument("", dtpCommLivreDate.Value, montant, nbEx, leLivreCommande.Id, 1, "en cours");
+                if (controller.CreerCommandeDocument(commande))
+                {
+                    lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
+                    RemplirCommLivreListe(lesCommandesLivre);
+                    txbCommLivreMontant.Text = "";
+                    txbCommLivreNbExemplaires.Text = "";
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la création de la commande.");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Montant ou nombre d'exemplaires invalide.");
+            }
+        }
+
+        private void btnCommLivreModifierSuivi_Click(object sender, EventArgs e)
+        {
+            if (dgvCommLivreListe.CurrentCell == null || leLivreCommande == null)
+            {
+                MessageBox.Show("Sélectionner une commande.");
+                return;
+            }
+            if (cbxCommLivreSuivi.SelectedIndex < 0)
+            {
+                MessageBox.Show("Sélectionner une étape de suivi.");
+                return;
+            }
+            CommandeDocument commande = (CommandeDocument)bdgCommLivreListe.List[bdgCommLivreListe.Position];
+            Suivi suivi = (Suivi)cbxCommLivreSuivi.SelectedItem;
+            if (commande.IdSuivi == 3)
+            {
+                MessageBox.Show("Cette commande est déjà réglée.");
+                return;
+            }
+            if (controller.UpdateSuiviCommande(commande.Id, suivi.Id))
+            {
+                lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
+                RemplirCommLivreListe(lesCommandesLivre);
+            }
+            else
+            {
+                MessageBox.Show("Erreur lors de la modification.");
+            }
+        }
+
+        private void btnCommLivreSupprimer_Click(object sender, EventArgs e)
+        {
+            if (dgvCommLivreListe.CurrentCell == null || leLivreCommande == null)
+            {
+                MessageBox.Show("Sélectionner une commande.");
+                return;
+            }
+            CommandeDocument commande = (CommandeDocument)bdgCommLivreListe.List[bdgCommLivreListe.Position];
+            if (commande.IdSuivi >= 2)
+            {
+                MessageBox.Show("Impossible de supprimer une commande déjà livrée ou réglée.");
+                return;
+            }
+            if (MessageBox.Show("Confirmer la suppression ?", "Suppression", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                if (controller.SupprimerCommandeDocument(commande.Id))
+                {
+                    lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
+                    RemplirCommLivreListe(lesCommandesLivre);
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la suppression.");
+                }
+            }
+        }
+        #endregion
+
+        #region Onglet Commandes Revues
+        private readonly BindingSource bdgCommRevueListe = new BindingSource();
+        private List<Abonnement> lesAbonnements = new List<Abonnement>();
+        private Revue laRevueCommande = null;
+
+        private void btnCommRevueRecherche_Click(object sender, EventArgs e)
+        {
+            if (txbCommRevueNumRecherche.Text.Equals(""))
+            {
+                MessageBox.Show("Veuillez saisir un numéro de revue.");
+                return;
+            }
+            if (lesRevues.Count == 0)
+            {
+                lesRevues = controller.GetAllRevues();
+            }
+            laRevueCommande = lesRevues.Find(x => x.Id.Equals(txbCommRevueNumRecherche.Text));
+            if (laRevueCommande == null)
+            {
+                MessageBox.Show("Numéro introuvable.");
+                return;
+            }
+            txbCommRevueNumero.Text = laRevueCommande.Id;
+            txbCommRevueTitre.Text = laRevueCommande.Titre;
+            lesAbonnements = controller.GetAbonnementsRevue(laRevueCommande.Id);
+            RemplirCommRevueListe(lesAbonnements);
+        }
+
+        private void RemplirCommRevueListe(List<Abonnement> abonnements)
+        {
+            bdgCommRevueListe.DataSource = abonnements;
+            dgvCommRevueListe.DataSource = bdgCommRevueListe;
+            dgvCommRevueListe.Columns["IdRevue"].Visible = false;
+            dgvCommRevueListe.Columns["Titre"].Visible = false;
+            dgvCommRevueListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        }
+
+        private void dgvCommRevueListe_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            string col = dgvCommRevueListe.Columns[e.ColumnIndex].HeaderText;
+            List<Abonnement> sortedList = new List<Abonnement>();
+            switch (col)
+            {
+                case "Id":
+                    sortedList = lesAbonnements.OrderBy(o => o.Id).ToList();
+                    break;
+                case "DateCommande":
+                    sortedList = lesAbonnements.OrderBy(o => o.DateCommande).ToList();
+                    break;
+                case "Montant":
+                    sortedList = lesAbonnements.OrderBy(o => o.Montant).ToList();
+                    break;
+                case "DateFinAbonnement":
+                    sortedList = lesAbonnements.OrderBy(o => o.DateFinAbonnement).ToList();
+                    break;
+                default:
+                    sortedList = lesAbonnements;
+                    break;
+            }
+            RemplirCommRevueListe(sortedList);
+        }
+
+        private void btnCommRevueAjouter_Click(object sender, EventArgs e)
+        {
+            if (laRevueCommande == null)
+            {
+                MessageBox.Show("Rechercher une revue avant d'ajouter une commande.");
+                return;
+            }
+            if (txbCommRevueMontant.Text.Equals(""))
+            {
+                MessageBox.Show("Le montant est obligatoire.");
+                return;
+            }
+            try
+            {
+                double montant = double.Parse(txbCommRevueMontant.Text);
+                Abonnement abonnement = new Abonnement("", dtpCommRevueDate.Value, montant, dtpCommRevueFinAbonnement.Value, laRevueCommande.Id);
+                if (controller.CreerAbonnement(abonnement))
+                {
+                    lesAbonnements = controller.GetAbonnementsRevue(laRevueCommande.Id);
+                    RemplirCommRevueListe(lesAbonnements);
+                    txbCommRevueMontant.Text = "";
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la création.");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Le montant doit être un nombre.");
+            }
+        }
+
+        private void btnCommRevueSupprimer_Click(object sender, EventArgs e)
+        {
+            if (dgvCommRevueListe.CurrentCell == null || laRevueCommande == null)
+            {
+                MessageBox.Show("Sélectionner un abonnement.");
+                return;
+            }
+            Abonnement abonnement = (Abonnement)bdgCommRevueListe.List[bdgCommRevueListe.Position];
+            List<Exemplaire> exemplaires = controller.GetExemplairesRevue(laRevueCommande.Id);
+            foreach (Exemplaire ex in exemplaires)
+            {
+                if (Abonnement.ParutionDansAbonnement(abonnement.DateCommande, abonnement.DateFinAbonnement, ex.DateAchat))
+                {
+                    MessageBox.Show("Impossible de supprimer : des exemplaires sont rattachés à cet abonnement.");
+                    return;
+                }
+            }
+            if (MessageBox.Show("Confirmer la suppression ?", "Suppression", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                if (controller.SupprimerAbonnement(abonnement.Id))
+                {
+                    lesAbonnements = controller.GetAbonnementsRevue(laRevueCommande.Id);
+                    RemplirCommRevueListe(lesAbonnements);
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la suppression.");
+                }
+            }
+        }
+        #endregion
     }
 }

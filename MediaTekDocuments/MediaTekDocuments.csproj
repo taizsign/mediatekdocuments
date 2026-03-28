@@ -74,8 +74,11 @@
     <Compile Include="model\Document.cs" />
     <Compile Include="model\Dvd.cs" />
     <Compile Include="model\Etat.cs" />
+    <Compile Include="model\Abonnement.cs" />
+    <Compile Include="model\CommandeDocument.cs" />
     <Compile Include="model\Exemplaire.cs" />
     <Compile Include="model\Genre.cs" />
+    <Compile Include="model\Suivi.cs" />
     <Compile Include="model\Livre.cs" />
     <Compile Include="model\LivreDvd.cs" />
     <Compile Include="model\Public.cs" />

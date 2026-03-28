@@ -35,6 +35,8 @@ namespace MediaTekDocuments.dal
         /// méthode HTTP pour insert
         /// </summary>
         private const string POST = "POST";
+        private const string PUT = "PUT";
+        private const string DELETE = "DELETE";
         /// <summary>
         /// méthode HTTP pour update
 
@@ -161,6 +163,65 @@ namespace MediaTekDocuments.dal
                 Console.WriteLine(ex.Message);
             }
             return false;
+        }
+
+        public List<CommandeDocument> GetCommandesDocument(string idLivreDvd)
+        {
+            String jsonId = convertToJson("idLivreDvd", idLivreDvd);
+            return TraitementRecup<CommandeDocument>(GET, "commandedocument/" + jsonId, null);
+        }
+
+        public List<Suivi> GetAllSuivi()
+        {
+            return TraitementRecup<Suivi>(GET, "suivi", null);
+        }
+
+        public bool CreerCommandeDocument(CommandeDocument commande)
+        {
+            String jsonCommande = JsonConvert.SerializeObject(commande, new CustomDateTimeConverter());
+            List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(POST, "commandedocument", "champs=" + jsonCommande);
+            return liste != null;
+        }
+
+        public bool UpdateSuiviCommande(string idCommande, int idSuivi)
+        {
+            Dictionary<string, int> champs = new Dictionary<string, int>();
+            champs.Add("idSuivi", idSuivi);
+            String jsonChamps = JsonConvert.SerializeObject(champs);
+            List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(PUT, "commandedocument/" + idCommande, "champs=" + jsonChamps);
+            return liste != null;
+        }
+
+        public bool SupprimerCommandeDocument(string idCommande)
+        {
+            String jsonId = convertToJson("id", idCommande);
+            List<CommandeDocument> liste = TraitementRecup<CommandeDocument>(DELETE, "commandedocument/" + jsonId, null);
+            return liste != null;
+        }
+
+        public List<Abonnement> GetAbonnementsRevue(string idRevue)
+        {
+            String jsonId = convertToJson("idRevue", idRevue);
+            return TraitementRecup<Abonnement>(GET, "abonnement/" + jsonId, null);
+        }
+
+        public bool CreerAbonnement(Abonnement abonnement)
+        {
+            String jsonAbonnement = JsonConvert.SerializeObject(abonnement, new CustomDateTimeConverter());
+            List<Abonnement> liste = TraitementRecup<Abonnement>(POST, "abonnement", "champs=" + jsonAbonnement);
+            return liste != null;
+        }
+
+        public bool SupprimerAbonnement(string idAbonnement)
+        {
+            String jsonId = convertToJson("id", idAbonnement);
+            List<Abonnement> liste = TraitementRecup<Abonnement>(DELETE, "abonnement/" + jsonId, null);
+            return liste != null;
+        }
+
+        public List<Abonnement> GetAbonnementsExpiration()
+        {
+            return TraitementRecup<Abonnement>(GET, "abonnementexpire", null);
         }
 
         /// <summary>
