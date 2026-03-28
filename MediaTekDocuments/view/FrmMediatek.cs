@@ -1381,6 +1381,16 @@ namespace MediaTekDocuments.view
                 MessageBox.Show("Cette commande est déjà réglée.");
                 return;
             }
+            if (commande.IdSuivi == 2 && suivi.Id == 1)
+            {
+                MessageBox.Show("Impossible de revenir en arrière.");
+                return;
+            }
+            if (suivi.Id == 3 && commande.IdSuivi == 1)
+            {
+                MessageBox.Show("La commande doit être livrée avant d'être réglée.");
+                return;
+            }
             if (controller.UpdateSuiviCommande(commande.Id, suivi.Id))
             {
                 lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
@@ -1411,6 +1421,182 @@ namespace MediaTekDocuments.view
                 {
                     lesCommandesLivre = controller.GetCommandesDocument(leLivreCommande.Id);
                     RemplirCommLivreListe(lesCommandesLivre);
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la suppression.");
+                }
+            }
+        }
+        #endregion
+
+        #region Onglet Commandes DVD
+        private readonly BindingSource bdgCommDvdListe = new BindingSource();
+        private readonly BindingSource bdgCommDvdSuivi = new BindingSource();
+        private List<CommandeDocument> lesCommandesDvd = new List<CommandeDocument>();
+        private Dvd leDvdCommande = null;
+
+        private void tabCommandesDvd_Enter(object sender, EventArgs e)
+        {
+            bdgCommDvdSuivi.DataSource = controller.GetAllSuivi();
+            cbxCommDvdSuivi.DataSource = bdgCommDvdSuivi;
+        }
+
+        private void btnCommDvdRecherche_Click(object sender, EventArgs e)
+        {
+            if (txbCommDvdNumRecherche.Text.Equals(""))
+            {
+                MessageBox.Show("Veuillez saisir un numéro de DVD.");
+                return;
+            }
+            if (lesDvd.Count == 0)
+            {
+                lesDvd = controller.GetAllDvd();
+            }
+            leDvdCommande = lesDvd.Find(x => x.Id.Equals(txbCommDvdNumRecherche.Text));
+            if (leDvdCommande == null)
+            {
+                MessageBox.Show("Numéro introuvable.");
+                return;
+            }
+            txbCommDvdNumero.Text = leDvdCommande.Id;
+            txbCommDvdTitre.Text = leDvdCommande.Titre;
+            txbCommDvdRealisateur.Text = leDvdCommande.Realisateur;
+            lesCommandesDvd = controller.GetCommandesDocument(leDvdCommande.Id);
+            RemplirCommDvdListe(lesCommandesDvd);
+        }
+
+        private void RemplirCommDvdListe(List<CommandeDocument> commandes)
+        {
+            bdgCommDvdListe.DataSource = commandes;
+            dgvCommDvdListe.DataSource = bdgCommDvdListe;
+            dgvCommDvdListe.Columns["IdLivreDvd"].Visible = false;
+            dgvCommDvdListe.Columns["IdSuivi"].Visible = false;
+            dgvCommDvdListe.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        }
+
+        private void dgvCommDvdListe_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            string col = dgvCommDvdListe.Columns[e.ColumnIndex].HeaderText;
+            List<CommandeDocument> sortedList = new List<CommandeDocument>();
+            switch (col)
+            {
+                case "Id":
+                    sortedList = lesCommandesDvd.OrderBy(o => o.Id).ToList();
+                    break;
+                case "DateCommande":
+                    sortedList = lesCommandesDvd.OrderBy(o => o.DateCommande).ToList();
+                    break;
+                case "Montant":
+                    sortedList = lesCommandesDvd.OrderBy(o => o.Montant).ToList();
+                    break;
+                case "NbExemplaire":
+                    sortedList = lesCommandesDvd.OrderBy(o => o.NbExemplaire).ToList();
+                    break;
+                case "LibelleSuivi":
+                    sortedList = lesCommandesDvd.OrderBy(o => o.LibelleSuivi).ToList();
+                    break;
+                default:
+                    sortedList = lesCommandesDvd;
+                    break;
+            }
+            RemplirCommDvdListe(sortedList);
+        }
+
+        private void btnCommDvdAjouter_Click(object sender, EventArgs e)
+        {
+            if (leDvdCommande == null)
+            {
+                MessageBox.Show("Rechercher un DVD avant d'ajouter une commande.");
+                return;
+            }
+            if (txbCommDvdMontant.Text.Equals("") || txbCommDvdNbExemplaires.Text.Equals(""))
+            {
+                MessageBox.Show("Tous les champs sont obligatoires.");
+                return;
+            }
+            try
+            {
+                double montant = double.Parse(txbCommDvdMontant.Text);
+                int nbEx = int.Parse(txbCommDvdNbExemplaires.Text);
+                CommandeDocument commande = new CommandeDocument("", dtpCommDvdDate.Value, montant, nbEx, leDvdCommande.Id, 1, "en cours");
+                if (controller.CreerCommandeDocument(commande))
+                {
+                    lesCommandesDvd = controller.GetCommandesDocument(leDvdCommande.Id);
+                    RemplirCommDvdListe(lesCommandesDvd);
+                    txbCommDvdMontant.Text = "";
+                    txbCommDvdNbExemplaires.Text = "";
+                }
+                else
+                {
+                    MessageBox.Show("Erreur lors de la création de la commande.");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Montant ou nombre d'exemplaires invalide.");
+            }
+        }
+
+        private void btnCommDvdModifierSuivi_Click(object sender, EventArgs e)
+        {
+            if (dgvCommDvdListe.CurrentCell == null || leDvdCommande == null)
+            {
+                MessageBox.Show("Sélectionner une commande.");
+                return;
+            }
+            if (cbxCommDvdSuivi.SelectedIndex < 0)
+            {
+                MessageBox.Show("Sélectionner une étape de suivi.");
+                return;
+            }
+            CommandeDocument commande = (CommandeDocument)bdgCommDvdListe.List[bdgCommDvdListe.Position];
+            Suivi suivi = (Suivi)cbxCommDvdSuivi.SelectedItem;
+            if (commande.IdSuivi == 3)
+            {
+                MessageBox.Show("Cette commande est déjà réglée.");
+                return;
+            }
+            if (commande.IdSuivi == 2 && suivi.Id == 1)
+            {
+                MessageBox.Show("Impossible de revenir en arrière.");
+                return;
+            }
+            if (suivi.Id == 3 && commande.IdSuivi == 1)
+            {
+                MessageBox.Show("La commande doit être livrée avant d'être réglée.");
+                return;
+            }
+            if (controller.UpdateSuiviCommande(commande.Id, suivi.Id))
+            {
+                lesCommandesDvd = controller.GetCommandesDocument(leDvdCommande.Id);
+                RemplirCommDvdListe(lesCommandesDvd);
+            }
+            else
+            {
+                MessageBox.Show("Erreur lors de la modification.");
+            }
+        }
+
+        private void btnCommDvdSupprimer_Click(object sender, EventArgs e)
+        {
+            if (dgvCommDvdListe.CurrentCell == null || leDvdCommande == null)
+            {
+                MessageBox.Show("Sélectionner une commande.");
+                return;
+            }
+            CommandeDocument commande = (CommandeDocument)bdgCommDvdListe.List[bdgCommDvdListe.Position];
+            if (commande.IdSuivi >= 2)
+            {
+                MessageBox.Show("Impossible de supprimer une commande déjà livrée ou réglée.");
+                return;
+            }
+            if (MessageBox.Show("Confirmer la suppression ?", "Suppression", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                if (controller.SupprimerCommandeDocument(commande.Id))
+                {
+                    lesCommandesDvd = controller.GetCommandesDocument(leDvdCommande.Id);
+                    RemplirCommDvdListe(lesCommandesDvd);
                 }
                 else
                 {
