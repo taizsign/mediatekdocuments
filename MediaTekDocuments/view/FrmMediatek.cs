@@ -20,14 +20,19 @@ namespace MediaTekDocuments.view
         private readonly BindingSource bdgGenres = new BindingSource();
         private readonly BindingSource bdgPublics = new BindingSource();
         private readonly BindingSource bdgRayons = new BindingSource();
+        private readonly Utilisateur utilisateur;
 
-        /// <summary>
-        /// Constructeur : création du contrôleur lié à ce formulaire
-        /// </summary>
-        internal FrmMediatek()
+        internal FrmMediatek(Utilisateur utilisateur)
         {
             InitializeComponent();
             this.controller = new FrmMediatekController();
+            this.utilisateur = utilisateur;
+            if (utilisateur.IdService == 1)
+            {
+                tabOngletsApplication.Controls.Remove(tabCommandesLivres);
+                tabOngletsApplication.Controls.Remove(tabCommandesRevues);
+                tabOngletsApplication.Controls.Remove(tabCommandesDvd);
+            }
         }
 
         /// <summary>
@@ -1242,6 +1247,10 @@ namespace MediaTekDocuments.view
 
         private void FrmMediatek_Load(object sender, EventArgs e)
         {
+            if (utilisateur.IdService != 3)
+            {
+                return;
+            }
             List<Abonnement> expirations = controller.GetAbonnementsExpiration();
             if (expirations.Count > 0)
             {

@@ -224,6 +224,20 @@ namespace MediaTekDocuments.dal
             return TraitementRecup<Abonnement>(GET, "abonnementexpire", null);
         }
 
+        public Utilisateur GetUtilisateur(string login, string mdp)
+        {
+            Dictionary<string, string> champs = new Dictionary<string, string>();
+            champs.Add("login", login);
+            champs.Add("mdp", mdp);
+            String jsonChamps = JsonConvert.SerializeObject(champs);
+            List<Utilisateur> liste = TraitementRecup<Utilisateur>(GET, "utilisateur/" + jsonChamps, null);
+            if (liste.Count > 0)
+            {
+                return liste[0];
+            }
+            return null;
+        }
+
         /// <summary>
         /// Traitement de la récupération du retour de l'api, avec conversion du json en liste pour les select (GET)
         /// </summary>

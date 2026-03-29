@@ -62,8 +62,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="manager\ApiRest.cs" />
+    <Compile Include="controller\FrmLoginController.cs" />
     <Compile Include="controller\FrmMediatekController.cs" />
     <Compile Include="dal\Access.cs" />
+    <Compile Include="view\FrmLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="view\FrmLogin.Designer.cs">
+      <DependentUpon>FrmLogin.cs</DependentUpon>
+    </Compile>
     <Compile Include="view\FrmMediatek.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -78,7 +85,9 @@
     <Compile Include="model\CommandeDocument.cs" />
     <Compile Include="model\Exemplaire.cs" />
     <Compile Include="model\Genre.cs" />
+    <Compile Include="model\Service.cs" />
     <Compile Include="model\Suivi.cs" />
+    <Compile Include="model\Utilisateur.cs" />
     <Compile Include="model\Livre.cs" />
     <Compile Include="model\LivreDvd.cs" />
     <Compile Include="model\Public.cs" />
