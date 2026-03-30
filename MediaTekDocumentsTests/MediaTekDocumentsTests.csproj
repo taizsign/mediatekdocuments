@@ -42,6 +42,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="TestAbonnement.cs" />
+    <Compile Include="TestLivre.cs" />
+    <Compile Include="TestRevue.cs" />
+    <Compile Include="TestUtilisateur.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

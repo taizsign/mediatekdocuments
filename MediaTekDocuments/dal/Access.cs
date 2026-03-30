@@ -39,12 +39,12 @@ namespace MediaTekDocuments.dal
         private const string PUT = "PUT";
         private const string DELETE = "DELETE";
         private const string CHAMPS = "champs=";
-        private static readonly string logFile = "logs/log.txt";
+        private static readonly string logFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MediaTekDocuments", "log.txt");
 
         private static void Log(string message)
         {
             Console.WriteLine(message);
-            Directory.CreateDirectory("logs");
+            Directory.CreateDirectory(Path.GetDirectoryName(logFile));
             File.AppendAllText(logFile, DateTime.Now.ToString() + " " + message + Environment.NewLine);
         }
         /// <summary>
